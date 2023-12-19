@@ -2,11 +2,8 @@ from selenium import webdriver;
 from selenium.webdriver.chrome.options import Options;
 from selenium.webdriver.chrome.service import Service;
 
-from time import sleep
 from pyquery import PyQuery
 from json import dumps
-
-import requests
 
 from libs.helpers import Parser
 
@@ -29,10 +26,14 @@ class Google:
 
     def __filter_image(self, container: PyQuery) -> None:
         for div in container('.G19kAf.ENn9pd'):
+            data: PyQuery = self.__parser.execute(div, '.ksQYvb')
 
             self.__result['data'].append({
-                "url_image": self.__parser.execute(div, '.Me0cf img').attr('src') if not self.__parser.execute(div, '.Me0cf img').attr('data-src') else self.__parser.execute(div, '.Me0cf img').attr('data-src'),
-                "url_icon_website": self.__parser.execute(div, '.PlAMyb img').attr('src') if not self.__parser.execute(div, '.PlAMyb img').attr('data-src') else self.__parser.execute(div, '.PlAMyb img').attr('data-src'),
+                "source": data.attr('data-action-url').split('/')[2],
+                "url_image": data.attr('data-thumbnail-url'),
+                "url_website": data.attr('data-action-url'),
+                "url_website_icon": self.__parser.execute(div, '.PlAMyb img').attr('src') if not self.__parser.execute(div, '.PlAMyb img').attr('data-src') else self.__parser.execute(div, '.PlAMyb img').attr('data-src'),
+                "caption": data.attr('data-item-title')
             })
             
 
@@ -61,13 +62,6 @@ if(__name__ == '__main__'):
     
     with open('test_data.json', 'w') as file:
         file.write(dumps(data, indent=2, ensure_ascii=False))
-    
-    for i, img in enumerate(data['data']):
-        with open(f'test/img/{i}.jpg', 'wb') as file:
-            file.write(requests.get(img['url_image']).content)
-
-        with open(f'test/icon/{i}.jpg', 'wb') as file:
-            file.write(requests.get(img['url_icon_website']).content)
 
     # import undetected_chromedriver as uc
     # driver = uc.Chrome(headless=True,use_subprocess=False)
