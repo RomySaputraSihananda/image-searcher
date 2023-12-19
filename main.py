@@ -1,6 +1,10 @@
-from typing import Union
+import uuid
+import os
 
+from typing import Union
 from fastapi import FastAPI, File, UploadFile, templating, Request
+
+from libs import Google
 
 app = FastAPI()
 
@@ -12,7 +16,12 @@ def read_root(request: Request):
 
 @app.post('/upload')
 async def upload(gambar: UploadFile = File(...)):
-    with open(gambar.filename, 'wb') as f:
+    name = str(uuid.uuid4()) + '.' + gambar.filename.split('.')[-1]
+    with open(f'img/{name}', 'wb') as f:
         f.write(gambar.file.read())
 
-    return { "filename":  gambar.filename}
+    data = Google().start(f'{os.getcwd()}/img/{name}')
+
+    os.remove(f'{os.getcwd()}/img/{name}')
+
+    return data
