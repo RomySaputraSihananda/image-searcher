@@ -33,7 +33,7 @@ class GoogleController:
             with open(str(path), 'wb') as file:
                 file.write(image_byte)
 
-            response: Google = Google().search_image(str(path))
+            response: dict = Google().search_image(str(path))
             
             path.unlink(missing_ok=True)
 
@@ -52,7 +52,7 @@ class GoogleController:
             if(not format): 
                 return JSONResponse(content=BodyResponse(HTTPStatus.BAD_REQUEST, None, message='url not contain image').__dict__, status_code=HTTPStatus.BAD_REQUEST)
 
-            response: Google = Google().search_image_by_url(url_image)
+            response: dict = Google().search_image_by_url(url_image)
             
             return JSONResponse(content=BodyResponse(HTTPStatus.OK, response['data']).__dict__, status_code=HTTPStatus.OK)
         

@@ -5,4 +5,5 @@ class BodyResponse:
         self.status: str = status_code.phrase
         self.code: int = status_code.value
         self.message: str = kwagrs.get('message', status_code.description)
+        self.data_length: int = len(data)
         self.data: list = data

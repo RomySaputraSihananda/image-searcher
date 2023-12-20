@@ -4,11 +4,12 @@ from selenium.webdriver.support.ui import WebDriverWait;
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 
 from pyquery import PyQuery
 from json import dumps
 
-from libs.helpers import Parser
+from libs.helpers import Parser, Datetime
 
 options: Options = Options()
 options.add_argument('--headless')
@@ -18,11 +19,12 @@ class Google:
         self.__driver: WebDriver = webdriver.Chrome(options=options)
         self.__driver.set_window_size(1920, 1080)
         self.__parser: Parser = Parser()
-
+        
         self.__result: dict = {}
-        # self.__result
+        self.__result['date_now']: str = Datetime().now()
+        self.__result['data']: list = []
 
-    def __wait_element(self, selector: str, timeout=10):
+    def __wait_element(self, selector: str, timeout: int = 10) -> WebElement:
         return WebDriverWait(self.__driver, timeout).until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
 
     def __filter_image(self, container: PyQuery) -> None:
@@ -38,8 +40,6 @@ class Google:
             })
 
     def search_image(self, path: str) -> dict:
-        self.__result['data'] = []
-
         self.__driver.get('https://google.com')
         
         self.__wait_element('.nDcEnd').click()
@@ -55,8 +55,6 @@ class Google:
         return self.__result
     
     def search_image_by_url(self, url_image: str) -> dict:
-        self.__result['data'] = []
-
         self.__driver.get(f'https://lens.google.com/uploadbyurl?url={url_image}')
 
         container: PyQuery = self.__parser.execute(self.__driver.page_source, '.aah4tc')
