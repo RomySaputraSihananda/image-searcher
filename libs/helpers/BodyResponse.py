@@ -1,9 +1,9 @@
 from http import HTTPStatus
 
 class BodyResponse:
-    def __init__(self, status_code: HTTPStatus, data, **kwagrs) -> None:
+    def __init__(self, status_code: HTTPStatus, data: list = 0, **kwagrs) -> None:
         self.status: str = status_code.phrase
         self.code: int = status_code.value
         self.message: str = kwagrs.get('message', status_code.description)
-        self.data_length: int = len(data) if data else 0
+        self.data_length: int = len(data)
         self.data: list = data
