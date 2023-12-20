@@ -1,7 +1,10 @@
 import uuid
 import os
 import imghdr
+import requests
 
+from requests.exceptions import MissingSchema
+from requests import Response
 from fastapi import  File, UploadFile, APIRouter
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
@@ -10,27 +13,53 @@ from pathlib import Path
 from libs.services import Google
 from libs.helpers import BodyResponse
 
-router = APIRouter()
+class GoogleController:
+    def __init__(self) -> None:
+        self.router = APIRouter()
+        self.router.post('/search')(self.__search_image)
+        self.router.get('/searchbyurl')(self.__search_image_by_url)
 
-@router.post('/search')
-async def upload(image: UploadFile = File(...)) -> JSONResponse:
-    image_byte: bytes = image.file.read()
-    # try:
-    format: str = imghdr.what(image.filename, image_byte)
+    async def __search_image(self, image: UploadFile = File(...)) -> JSONResponse:
+        image_byte: bytes = image.file.read()
+        try:
+            format: str = imghdr.what(image.filename, image_byte)
 
-    if(not format): 
-        return JSONResponse(content=BodyResponse(HTTPStatus.BAD_REQUEST, None).__dict__, status_code=HTTPStatus.BAD_REQUEST)
+            if(not format): 
+                return JSONResponse(content=BodyResponse(HTTPStatus.BAD_REQUEST, None, message='The image format is not correct').__dict__, status_code=HTTPStatus.BAD_REQUEST)
+                
+            name: str = f'{uuid.uuid4()}.{format}'
+            path: Path = Path(f'{os.getcwd()}/{name}')
+
+            with open(str(path), 'wb') as file:
+                file.write(image_byte)
+
+            response: Google = Google().search_image(str(path))
+            
+            path.unlink(missing_ok=True)
+
+            return JSONResponse(content=BodyResponse(HTTPStatus.OK, response['data']).__dict__, status_code=HTTPStatus.OK)
+        except Exception as e:
+            return JSONResponse(content=BodyResponse(HTTPStatus.INTERNAL_SERVER_ERROR, None, message=e).__dict__, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)            
+
+    async def __search_image_by_url(self, url_image: str = None) -> JSONResponse:
+        try:
+            response: Response = requests.get(url_image, stream=True)
+            if(response.status_code != 200): 
+                return JSONResponse(content=BodyResponse(HTTPStatus.NOT_FOUND, None, message='url image not found').__dict__, status_code=HTTPStatus.NOT_FOUND)
+
+            format: str = imghdr.what(None, b"".join(response.iter_content(chunk_size=128)))
+
+            if(not format): 
+                return JSONResponse(content=BodyResponse(HTTPStatus.BAD_REQUEST, None, message='url not contain image').__dict__, status_code=HTTPStatus.BAD_REQUEST)
+
+            response: Google = Google().search_image_by_url(url_image)
+            
+            return JSONResponse(content=BodyResponse(HTTPStatus.OK, response['data']).__dict__, status_code=HTTPStatus.OK)
         
-    name: str = f'{uuid.uuid4()}.{format}'
-    path: Path = Path(f'{os.getcwd()}/{name}')
+        except MissingSchema as e:
+            return JSONResponse(content=BodyResponse(HTTPStatus.INTERNAL_SERVER_ERROR, None, message=str(e)).__dict__, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+        
+        except Exception as e:
+            return JSONResponse(content=BodyResponse(HTTPStatus.INTERNAL_SERVER_ERROR, None).__dict__, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    with open(str(path), 'wb') as file:
-        file.write(image_byte)
-
-    response: Google = Google().start(str(path))
-    
-    path.unlink(missing_ok=True)
-
-    return JSONResponse(content=BodyResponse(HTTPStatus.OK, response['data']).__dict__, status_code=HTTPStatus.OK)
-    # except:
-    #     return JSONResponse(content=BodyResponse(HTTPStatus.INTERNAL_SERVER_ERROR, None).__dict__, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+googleController: GoogleController = GoogleController()

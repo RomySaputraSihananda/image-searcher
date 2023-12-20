@@ -3,27 +3,24 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait;
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
 
 from pyquery import PyQuery
 from json import dumps
 
 from libs.helpers import Parser
 
+options: Options = Options()
+options.add_argument('--headless')
 
 class Google:
     def __init__(self) -> None:        
-        options: Options = Options()
-        options.add_argument('--headless')
-        options.add_argument('--ennable-logging')
-
-        self.__driver: WebDriver = webdriver.Chrome(service=Service(executable_path='./chromedriver'), options=options)
+        self.__driver: WebDriver = webdriver.Chrome(options=options)
         self.__driver.set_window_size(1920, 1080)
         self.__parser: Parser = Parser()
 
         self.__result: dict = {}
+        # self.__result
 
     def __wait_element(self, selector: str, timeout=10):
         return WebDriverWait(self.__driver, timeout).until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
@@ -40,7 +37,7 @@ class Google:
                 "caption": data.attr('data-item-title')
             })
 
-    def start(self, path: str) -> dict:
+    def search_image(self, path: str) -> dict:
         self.__result['data'] = []
 
         self.__driver.get('https://google.com')
@@ -56,13 +53,24 @@ class Google:
         self.__filter_image(container)
 
         return self.__result
+    
+    def search_image_by_url(self, url_image: str) -> dict:
+        self.__result['data'] = []
 
+        self.__driver.get(f'https://lens.google.com/uploadbyurl?url={url_image}')
 
+        container: PyQuery = self.__parser.execute(self.__driver.page_source, '.aah4tc')
+
+        self.__driver.close()
+
+        self.__filter_image(container)
+
+        return self.__result
 
 # testing
 if(__name__ == '__main__'):
     google: Google = Google()
-    data: dict = google.start('/home/romy/Destop/data-sensor/image-searcher/test.jpg') 
+    data: dict = google.search_image_by_url('http://45.146.106.80:9595/assets/img/') 
     
     with open('test_data.json', 'w') as file:
         file.write(dumps(data, indent=2, ensure_ascii=False))
