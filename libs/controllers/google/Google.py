@@ -17,7 +17,7 @@ class GoogleController:
     def __init__(self) -> None:
         self.router = APIRouter()
         self.router.post('/search')(self.__search_image)
-        self.router.get('/searchbyurl')(self.__search_image_by_url)
+        self.router.get('/search')(self.__search_image_by_url)
 
     async def __search_image(self, image: UploadFile = File(...)) -> JSONResponse:
         image_byte: bytes = image.file.read()
