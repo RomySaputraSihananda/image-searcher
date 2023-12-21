@@ -39,6 +39,7 @@ class GoogleController:
 
             return JSONResponse(content=BodyResponse(HTTPStatus.OK, response['data']).__dict__, status_code=HTTPStatus.OK)
         except Exception as e:
+            path.unlink(missing_ok=True)
             return JSONResponse(content=BodyResponse(HTTPStatus.INTERNAL_SERVER_ERROR, message=str(e)).__dict__, status_code=HTTPStatus.INTERNAL_SERVER_ERROR)            
 
     async def __search_image_by_url(self, url_image: str = None) -> JSONResponse:
