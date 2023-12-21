@@ -44,7 +44,7 @@ class Bing:
     def __retry(self, url, max_retries= 5, retry_interval= 0.2) -> webdriver :
         for _ in range(max_retries):
             options = Options()
-            # options.add_argument('--headless=new')
+            options.add_argument('--headless=new')
             driver = webdriver.Chrome(options=options)
 
             try:
